@@ -78,7 +78,7 @@ FONT_SMALL = pygame.font.SysFont("arial", 24)
 try:
     caminho_sfx = ROOT_DIR / "music" / "escolher_carro.mp3"
     SFX_BOTAO = pygame.mixer.Sound(str(caminho_sfx))
-    SFX_BOTAO.set_volume(0.5)
+    SFX_BOTAO.set_volume(1.0)
 except Exception as e:
     print(f"Aviso: Não foi possível carregar o efeito sonoro. Erro: {e}")
     SFX_BOTAO = None
@@ -303,7 +303,7 @@ def main_geral():
     caminho_musica_menu = ROOT_DIR / "music" / "principal.mp3"
     try:
         pygame.mixer.music.load(str(caminho_musica_menu))
-        pygame.mixer.music.set_volume(0.05)
+        pygame.mixer.music.set_volume(1.0)
         pygame.mixer.music.play(-1)
     except Exception as e:
         print(f"Aviso: Não foi possível carregar a música do menu. Erro: {e}")
@@ -317,7 +317,7 @@ def main_geral():
     caminho_musica = ROOT_DIR / "music" / "principal_sixdays.mp3"
     try:
         pygame.mixer.music.load(str(caminho_musica))
-        pygame.mixer.music.set_volume(0.1)
+        pygame.mixer.music.set_volume(1.0)
         pygame.mixer.music.play(-1)
     except Exception as e:
         print(f"Aviso: Não foi possível carregar a música da corrida. Erro: {e}")
