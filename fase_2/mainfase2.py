@@ -387,7 +387,7 @@ def run_phase_2(player1_name: str, player2_name: str, car1_sprite=None, car2_spr
     if WIN.get_size() != (WIDTH, HEIGHT):
         WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 
-    lane_offset = 14
+    lane_offset = 9
 
     lane_left, lane_right, center_raw = build_lane_paths_phase2(track, lane_offset)
     center_path = build_path(center_raw, density=18)
