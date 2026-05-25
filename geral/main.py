@@ -4,6 +4,14 @@ import importlib.util
 from pathlib import Path
 import pygame
 import inspect
+import ctypes
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(CURRENT_DIR)
+
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+from fase_2.utils import check_exit
 
 def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, voltas2):
     """
@@ -11,12 +19,12 @@ def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, volta
     Aceita nomes diferentes de função para evitar erro de compatibilidade.
     """
     if hasattr(modulo, "show_results"):
-        modulo.show_results(fase, vencedor, nome1, nome2, voltas1, voltas2)
+        return modulo.show_results(fase, vencedor, nome1, nome2, voltas1, voltas2)
     elif hasattr(modulo, "show_phase_result"):
-        modulo.show_phase_result(fase, vencedor, nome1, nome2, voltas1, voltas2)
+        return modulo.show_phase_result(fase, vencedor, nome1, nome2, voltas1, voltas2)
     elif hasattr(modulo, "show_message"):
         texto_vencedor = nome1 if vencedor == 1 else nome2
-        modulo.show_message(
+        return modulo.show_message(
             f"Resultado da Fase {fase}",
             [
                 f"Vencedor: {texto_vencedor}",
@@ -26,8 +34,18 @@ def chamar_resultado_modulo(modulo, fase, vencedor, nome1, nome2, voltas1, volta
         )
     else:
         print(f"Fase {fase} encerrada.")
+        return None
 
-os.environ["SDL_VIDEO_CENTERED"] = "1"
+# resolução da tela do monitor
+user32 = ctypes.windll.user32
+screen_width = user32.GetSystemMetrics(0)
+WIDTH = 1200
+HEIGHT = 825
+# centraliza horizontalmente
+x = (screen_width - WIDTH) // 2
+# define altura manual
+y = 0
+os.environ["SDL_VIDEO_WINDOW_POS"] = f"{x},{y}"
 pygame.init()
 pygame.font.init()
 pygame.mixer.init() # INICIA O ÁUDIO AQUI PARA CARREGAR OS EFEITOS
@@ -38,10 +56,10 @@ ROOT_DIR = CURRENT_DIR.parent
 FASE1_PATH = ROOT_DIR / "fase_1" / "mainfase1.py"
 FASE2_PATH = ROOT_DIR / "fase_2" / "mainfase2.py"
 
-WIDTH, HEIGHT = 1200, 900
+WIDTH, HEIGHT = 1200, 825
 FPS = 60
 
-WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+WIN = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
 pygame.display.set_caption("Autorama Arcade - Menu Principal")
 
 IMG_PATH = ROOT_DIR / "img"
@@ -60,7 +78,7 @@ FONT_SMALL = pygame.font.SysFont("arial", 24)
 try:
     caminho_sfx = ROOT_DIR / "music" / "escolher_carro.mp3"
     SFX_BOTAO = pygame.mixer.Sound(str(caminho_sfx))
-    SFX_BOTAO.set_volume(0.5)
+    SFX_BOTAO.set_volume(1.0)
 except Exception as e:
     print(f"Aviso: Não foi possível carregar o efeito sonoro. Erro: {e}")
     SFX_BOTAO = None
@@ -78,7 +96,6 @@ def load_module(module_name: str, file_path: Path):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
-
 
 fase1_module = load_module("mainfase1", FASE1_PATH)
 fase2_module = load_module("mainfase2", FASE2_PATH)
@@ -142,6 +159,7 @@ def tela_capa_jogo():
         WIN.blit(fundo_capa, (0, 0))
 
         for event in pygame.event.get():
+            check_exit(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
@@ -202,6 +220,7 @@ def tela_escolha_carros():
         current_name = FONT_MED.render(CAR_OPTIONS[current]["label"], True, WHITE)
 
         for event in pygame.event.get():
+            check_exit(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
@@ -268,6 +287,7 @@ def exibir_instrucao(nome_imagem):
         WIN.blit(fundo_instrucao, (0, 0))
 
         for event in pygame.event.get():
+            check_exit(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
@@ -280,51 +300,35 @@ def exibir_instrucao(nome_imagem):
 
 
 def main_geral():
-    # MÚSICA DOS MENUS (Música Ambiente)
     caminho_musica_menu = ROOT_DIR / "music" / "principal.mp3"
     try:
         pygame.mixer.music.load(str(caminho_musica_menu))
-        pygame.mixer.music.set_volume(0.05)  # Volume em 5%
-        pygame.mixer.music.play(-1)         # loop
+        pygame.mixer.music.set_volume(1.0)
+        pygame.mixer.music.play(-1)
     except Exception as e:
         print(f"Aviso: Não foi possível carregar a música do menu. Erro: {e}")
 
-    # 1. Tela Inicial (Capa)
     tela_capa_jogo()
-
-    # 2. Exibe Instrução de Escolha
     exibir_instrucao("tela de instrucoes_escolha_carros.png")
-
-    # 3. Tela real de Escolha dos carros
     car1_sprite, car2_sprite = tela_escolha_carros()
-
-    # 4. Pede os nomes dos jogadores
     player1_name, player2_name = fase1_module.ask_player_names()
-
-    # 5. Exibe Instrução de como Jogar a Corrida
     exibir_instrucao("tela de instrucoes_jogar.png")
 
-    # --- INICIAR A MÚSICA DA CORRIDA APÓS OS MENUS ---
     caminho_musica = ROOT_DIR / "music" / "principal_sixdays.mp3"
     try:
         pygame.mixer.music.load(str(caminho_musica))
-        pygame.mixer.music.set_volume(0.1)  # 
-        pygame.mixer.music.play(-1)         # Toca em loop contínuo
+        pygame.mixer.music.set_volume(1.0)
+        pygame.mixer.music.play(-1)
     except Exception as e:
         print(f"Aviso: Não foi possível carregar a música da corrida. Erro: {e}")
-    # ------------------------------------------------------
 
-    # Prepara para iniciar a Fase 1
     pygame.event.clear()
     pygame.time.wait(200)
-
-    # Limpa a tela antes de chamar a fase para evitar resquícios de imagens
     WIN.fill(BLACK)
     pygame.display.update()
 
     fase1_module.start_screen()
 
-    # Roda Fase 1
     phase1_winner, laps1_p1, laps1_p2 = call_compat(
         fase1_module.run_phase,
         1,
@@ -344,26 +348,25 @@ def main_geral():
         laps1_p2,
     )
 
-    # Roda Fase 2 (A música continuará tocando aqui sem interrupção!)
     phase2_winner, laps2_p1, laps2_p2 = call_compat(
         fase2_module.run_phase_2,
-        2,
         player1_name,
         player2_name,
         car1_sprite,
         car2_sprite,
     )
 
-    chamar_resultado_modulo(
-        fase2_module,
-        2,
-        phase2_winner,
-        player1_name,
-        player2_name,
-        laps2_p1,
-        laps2_p2,
-    )
+    resultado_final = fase2_module.show_results(
+    2,
+    phase2_winner,
+    player1_name,
+    player2_name,
+    laps2_p1,
+    laps2_p2,
+)
 
+    if resultado_final == "restart":
+        return main_geral()
 
 if __name__ == "__main__":
     main_geral()

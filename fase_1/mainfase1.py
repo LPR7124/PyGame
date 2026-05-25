@@ -1,3 +1,4 @@
+import ctypes
 """
 Módulo Principal - Fase 1 do Autorama.
 Este módulo é responsável por carregar os assets, inicializar a física dos carros, renderizar a pista e gerenciar o fluxo principal da corrida da Fase 1. Ele também fornece classes e funções utilitárias que foram reaproveitadas na fase 2 e podem ser aproveitadas por possíveis fases adicionais futuras.
@@ -7,6 +8,7 @@ import math
 import os
 import sys
 import pygame
+import ctypes
 
 # Configurações de diretório
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -16,10 +18,20 @@ PHASE2_DIR = os.path.join(ROOT_DIR, "fase_2")
 if CURRENT_DIR not in sys.path:
     sys.path.insert(0, CURRENT_DIR)
 
-from utils import scale_image, blit_rotate_center
+from utils import check_exit, scale_image, blit_rotate_center
 
+# resolução da tela do monitor
+user32 = ctypes.windll.user32
+screen_width = user32.GetSystemMetrics(0)
+
+WIDTH = 1200
+HEIGHT = 825
+# centraliza horizontalmente
+x = (screen_width - WIDTH) // 2
+# define altura manual
+y = 0
 # Centraliza a janela do PyGame
-os.environ["SDL_VIDEO_CENTERED"] = "1"
+os.environ["SDL_VIDEO_WINDOW_POS"] = f"{x},{y}"
 pygame.init()
 pygame.font.init()
 
@@ -37,6 +49,7 @@ TRACK_BORDER_MASK = pygame.mask.from_surface(TRACK_BORDER)
 RED_CAR = scale_image(pygame.image.load(os.path.join(IMG_PATH, "mazda.png")), 0.070)
 GREEN_CAR = scale_image(pygame.image.load(os.path.join(IMG_PATH, "lfa.png")), 0.070)
 
+WIN = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
 # Configurações da janela e visuais
 WIDTH, HEIGHT = 1200,900
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -101,11 +114,10 @@ def load_assets(level: int, car1_sprite=None, car2_sprite=None):
     green_sprite = car2_sprite if car2_sprite else "lfa.png"
 
     SCALE_MAP = {
-        "gol.png": 0.090,
+        "gol.png": 0.075,
         "lfa.png": 0.070,
         "miata.png": 0.300,
-        "rolls.png": 0.170,
-        "rx7.png": 0.080,
+        "rolls.png": 0.175,
         "mazda.png": 0.070,
     }
 
@@ -366,9 +378,7 @@ class SlotCar:
         self.vel += self.acceleration
 
         if self.vel > self.derail_vel:
-            # SOM DO CARRO MORRENDO
             try:
-                # Volta uma pasta para sair de 'fase_1' e entra em 'music'
                 caminho_sfx = os.path.join(os.path.dirname(__file__), "..", "music", "carro_morrendo.mp3")
                 pygame.mixer.Sound(caminho_sfx).play()
             except Exception as e:
@@ -439,6 +449,7 @@ def start_screen():
         clock.tick(FPS)
         WIN.blit(fundo_fase1, (0, 0))
         for event in pygame.event.get():
+            check_exit(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 raise SystemExit
@@ -472,8 +483,8 @@ def ask_player_names():
     altura_caixa = 52
     x_caixas = (WIDTH - largura_caixa) // 2
 
-    box1 = pygame.Rect(x_caixas, 390, largura_caixa, altura_caixa)
-    box2 = pygame.Rect(x_caixas, 565, largura_caixa, altura_caixa)
+    box1 = pygame.Rect(x_caixas, 355, largura_caixa, altura_caixa)
+    box2 = pygame.Rect(x_caixas, 515, largura_caixa, altura_caixa)
 
     largura_botao = 340
     altura_botao = 75
@@ -485,6 +496,7 @@ def ask_player_names():
         clock.tick(FPS)
 
         for event in pygame.event.get():
+            check_exit(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 raise SystemExit
@@ -493,12 +505,14 @@ def ask_player_names():
                 if event.key == pygame.K_TAB:
                     try:
                         pygame.mixer.Sound(os.path.join(IMG_PATH, "..", "music", "escolher_carro.mp3")).play()
-                    except: pass
+                    except:
+                        pass
                     active = 2 if active == 1 else 1
                 elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                     try:
                         pygame.mixer.Sound(os.path.join(IMG_PATH, "..", "music", "escolher_carro.mp3")).play()
-                    except: pass
+                    except:
+                        pass
                     return name1.strip() or "Player 1", name2.strip() or "Player 2"
                 elif event.key == pygame.K_BACKSPACE:
                     if active == 1:
@@ -532,7 +546,7 @@ def ask_player_names():
         pygame.display.update()
 
 
-def show_message_screen(title, lines, footer="Pressione ENTER para continuar"):
+def show_message_screen(title, lines, footer="Pressione ENTER para continuar", allow_restart=True):
     """
     Utilitário para exibir telas de aviso e transição.
     """
@@ -540,11 +554,15 @@ def show_message_screen(title, lines, footer="Pressione ENTER para continuar"):
     while True:
         clock.tick(FPS)
         for event in pygame.event.get():
+            check_exit(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 raise SystemExit
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                return
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    return "continue"
+                if allow_restart and event.key == pygame.K_TAB:
+                    return "restart"
 
         WIN.fill(DARK)
         center_text(WIN, title, FONT_BIG, WHITE, 110)
@@ -571,7 +589,8 @@ def run_phase(level: int, player1_name: str, player2_name: str, car1_sprite=None
 
     grass, track, border, red_car_img, green_car_img = load_assets(level, car1_sprite, car2_sprite)
 
-    WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+    os.environ["SDL_VIDEO_WINDOW_POS"] = f"{x},{y}"
+    WIN = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
 
     lane_offset = 22
 
@@ -594,22 +613,25 @@ def run_phase(level: int, player1_name: str, player2_name: str, car1_sprite=None
         clock.tick(FPS)
 
         for event in pygame.event.get():
+            check_exit(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 raise SystemExit
         # Processamento de input (Player 1 -> W/S ; Player 2 -> UP/DOWN)
         keys = pygame.key.get_pressed()
 
-        if keys[pygame.K_w]:
+        # Player 1 = setas
+        if keys[pygame.K_UP]:
             car1.accelerate()
-        elif keys[pygame.K_s]:
+        elif keys[pygame.K_DOWN]:
             car1.brake()
         else:
             car1.coast()
 
-        if keys[pygame.K_UP]:
+        # Player 2 = WASD
+        if keys[pygame.K_w]:
             car2.accelerate()
-        elif keys[pygame.K_DOWN]:
+        elif keys[pygame.K_s]:
             car2.brake()
         else:
             car2.coast()
@@ -664,6 +686,20 @@ def load_phase2_module():
 
 
 def show_phase_result(phase, winner_id, player1_name, player2_name, laps_1, laps_2):
+    global WIN
+    clock = pygame.time.Clock()
+    fundo_final = pygame.image.load(os.path.join(IMG_PATH, "final-fase1.png"))
+    fundo_final = pygame.transform.scale(fundo_final, (WIDTH, HEIGHT))
+
+    while True:
+        clock.tick(FPS)
+        WIN.blit(fundo_final, (0, 0))
+        for event in pygame.event.get():
+            check_exit(event)
+            if event.type == pygame.KEYDOWN:
+                if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                    return
+        pygame.display.update()
     """
     Formata e exibe o resultado da fase recém concluída.
     """
@@ -714,15 +750,6 @@ def main():
 
     show_phase_result(1, phase1_winner, player1_name, player2_name, laps1_p1, laps1_p2)
 
-    show_message_screen(
-        "FASE 2",
-        [
-            "Agora a segunda pista vai começar.",
-            "Os carrinhos continuam na própria faixa.",
-            "Quem fizer 5 voltas primeiro vence.",
-        ],
-    )
-    # Roda fase 2 (carregada dinamicamente)
     try:
         phase2_module = load_phase2_module()
         phase2_winner, laps2_p1, laps2_p2 = phase2_module.run_phase_2(player1_name, player2_name)
@@ -731,7 +758,6 @@ def main():
         print(f"Não foi possível carregar a fase 2. Erro: {e}")
         phase2_winner, laps2_p1, laps2_p2 = 0, 0, 0
 
-    show_final_screen(phase1_winner, phase2_winner, player1_name, player2_name)
     pygame.quit()
 
 

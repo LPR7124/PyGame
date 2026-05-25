@@ -22,3 +22,11 @@ def blit_rotate_center(
     # Desenha na tela usando o canto superior esquerdo calculado pelo rect
     surface.blit(rotated_image, new_rect.topleft)
     return new_rect
+def check_exit(event):
+    if event.type == pygame.QUIT:
+        pygame.quit()
+        raise SystemExit
+
+    if event.type == pygame.KEYDOWN and event.key == pygame.K_BACKSPACE:
+        pygame.quit()
+        raise SystemExit

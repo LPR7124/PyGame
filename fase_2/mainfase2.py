@@ -19,7 +19,7 @@ FASE1_DIR = os.path.join(ROOT_DIR, "fase_1")
 if FASE1_DIR not in sys.path:
     sys.path.insert(0, FASE1_DIR)
 
-from utils import scale_image, blit_rotate_center
+from utils import check_exit, scale_image, blit_rotate_center
 
 pygame.init()
 pygame.font.init()
@@ -38,7 +38,8 @@ FONT_MED = pygame.font.SysFont("arial", 34, bold=True)
 
 # CONFIGURAÇÕES DA EQUIPE
 TOTAL_VOLTAS = 3
-WIDTH, HEIGHT = 1200, 900
+WIDTH, HEIGHT = 1200, 825
+WIN = None
 
 
 def load_image(filename: str, scale: float = 1.0, fallback: str | None = None) -> pygame.Surface:
@@ -58,7 +59,6 @@ def load_image(filename: str, scale: float = 1.0, fallback: str | None = None) -
         path = os.path.join(IMG_PATH, fallback)
     image = pygame.image.load(path)
     return scale_image(image, scale)
-
 
 def load_phase2_assets(car1_sprite=None, car2_sprite=None):
     """
@@ -82,11 +82,10 @@ def load_phase2_assets(car1_sprite=None, car2_sprite=None):
     green_sprite = car2_sprite if car2_sprite else "lfa.png"
 
     SCALE_MAP = {
-        "gol.png": 0.058,
+        "gol.png": 0.048,
         "lfa.png": 0.045,
         "miata.png": 0.193,
-        "rolls.png": 0.109,
-        "rx7.png": 0.051,
+        "rolls.png": 0.112,
         "mazda.png": 0.045,
     }
 
@@ -98,13 +97,11 @@ def load_phase2_assets(car1_sprite=None, car2_sprite=None):
 
     return grass, track, red_car, green_car
 
-
 def pct(w: int, h: int, x: float, y: float) -> tuple[int, int]:
     """
     Converte proporções (0.0 a 1.0) em pixels absolutos da tela.
     """
     return int(w * x), int(h * y)
-
 
 def build_path(points: list[tuple[int, int]], density: int = 18) -> list[tuple[float, float]]:
     """
@@ -126,7 +123,6 @@ def build_path(points: list[tuple[int, int]], density: int = 18) -> list[tuple[f
             path.append((x, y))
     return path
 
-
 def normalize(x: float, y: float) -> tuple[float, float]:
     """
     Normaliza um vetor 2D garantindo que seu comprimento seja 1.
@@ -135,7 +131,6 @@ def normalize(x: float, y: float) -> tuple[float, float]:
     if dist == 0:
         return 0.0, 0.0
     return x / dist, y / dist
-
 
 def offset_closed_polyline(points: list[tuple[int, int]], offset: float) -> list[tuple[int, int]]:
     """
@@ -173,7 +168,6 @@ def offset_closed_polyline(points: list[tuple[int, int]], offset: float) -> list
         result.append((int(x + ox * length), int(y + oy * length)))
     return result
 
-
 def centerline_points(level: int, track: pygame.Surface) -> list[tuple[int, int]]:
     """
     Mapeamento absoluto das coordenadas centrais da pista da Fase 2.
@@ -181,6 +175,87 @@ def centerline_points(level: int, track: pygame.Surface) -> list[tuple[int, int]
     """
     w, h = track.get_width(), track.get_height()
     raw = [
+            (0.81, 0.87),
+            (0.40, 0.87),
+            (0.37, 0.86),
+            (0.34, 0.83),
+            (0.32, 0.80),
+            (0.30, 0.77),
+            (0.27, 0.75),
+            (0.25, 0.75),
+            (0.22, 0.77),
+            (0.20, 0.81),
+            (0.17, 0.84),
+            (0.13, 0.86),
+            (0.10, 0.86),
+            (0.07, 0.83),
+            (0.06, 0.79),
+            (0.06, 0.75),
+            (0.06, 0.34),
+            (0.06, 0.28),
+            (0.08, 0.23),
+            (0.11, 0.20),
+            (0.14, 0.18),
+            (0.16, 0.19),
+            (0.18, 0.22),
+            (0.19, 0.27),
+            (0.19, 0.53),
+            (0.20, 0.57),
+            (0.22, 0.61),
+            (0.25, 0.63),
+            (0.26, 0.64),
+            (0.39, 0.64),
+            (0.42, 0.62),
+            (0.43, 0.59),
+            (0.43, 0.54),
+            (0.41, 0.53),
+            (0.31, 0.53),
+            (0.29, 0.51),
+            (0.28, 0.49),
+            (0.28, 0.23),
+            (0.29, 0.20),
+            (0.31, 0.17),
+            (0.89, 0.17),
+            (0.91, 0.19),
+            (0.92, 0.21),
+            (0.93, 0.24),
+            (0.91, 0.27),
+            (0.89, 0.28),
+            (0.58, 0.28),
+            (0.55, 0.29),
+            (0.52, 0.32),
+            (0.52, 0.36),
+            (0.52, 0.40),
+            (0.54, 0.42),
+            (0.56, 0.43),
+            (0.59, 0.44),
+            (0.61, 0.46),
+            (0.61, 0.51),
+            (0.60, 0.53),
+            (0.57, 0.54),
+            (0.55, 0.54),
+            (0.53, 0.55),
+            (0.51, 0.58),
+            (0.51, 0.62),
+            (0.52, 0.65),
+            (0.55, 0.66),
+            (0.64, 0.66),
+            (0.66, 0.66),
+            (0.67, 0.68),
+            (0.68, 0.70),
+            (0.70, 0.72),
+            (0.72, 0.73),
+            (0.74, 0.74),
+            (0.90, 0.74),
+            (0.92, 0.75),
+            (0.94, 0.79),
+            (0.94, 0.82),
+            (0.93, 0.85),
+            (0.91, 0.87),
+            (0.90, 0.87),
+            (0.81, 0.87),
+]
+
         (0.80, 0.84), (0.39, 0.84), (0.37, 0.83), (0.34, 0.82),
         (0.33, 0.80), (0.31, 0.77), (0.29, 0.75), (0.27, 0.74),
         (0.26, 0.74), (0.24, 0.74), (0.21, 0.75), (0.20, 0.77),
@@ -215,7 +290,6 @@ def centerline_points(level: int, track: pygame.Surface) -> list[tuple[int, int]
     ]
     return [pct(w, h, x, y) for x, y in raw]
 
-
 def build_lane_paths_phase2(track: pygame.Surface, lane_offset: int = 24):
     """
     Envolve todo o fluxo de cálculos geométricos para entregar as pistas prontas."""
@@ -223,7 +297,6 @@ def build_lane_paths_phase2(track: pygame.Surface, lane_offset: int = 24):
     left_lane = build_path(offset_closed_polyline(center, -lane_offset), density=18)
     right_lane = build_path(offset_closed_polyline(center, lane_offset), density=18)
     return left_lane, right_lane, center
-
 
 class SlotCarPhase2:
     """
@@ -367,8 +440,49 @@ class SlotCarPhase2:
         if self.vel > 0:
             self.advance(self.vel)
 
+def show_results(fase, vencedor, nome1, nome2, voltas1, voltas2):
+    global WIN
+
+    WIN = pygame.display.get_surface()
+    if WIN is None:
+        WIN = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
+
+    clock = pygame.time.Clock()
+
+    fundo_final = pygame.image.load(os.path.join(IMG_PATH, "final-fase2.png"))
+    fundo_final = pygame.transform.scale(fundo_final, (WIDTH, HEIGHT))
+
+    vencedor_nome = nome1 if vencedor == 1 else nome2
+
+    while True:
+        clock.tick(FPS)
+        WIN.blit(fundo_final, (0, 0))
+
+        #titulo = FONT_MED.render("Resultado da Fase 2", True, WHITE)
+        #nome_vencedor = FONT_MED.render(f"Vencedor: {vencedor_nome}", True, WHITE)
+        #l1 = FONT_SMALL.render(f"{nome1}: {voltas1} voltas", True, WHITE)
+        #l2 = FONT_SMALL.render(f"{nome2}: {voltas2} voltas", True, WHITE)
+        #instrucao = FONT_SMALL.render("ENTER para continuar | ESC para reiniciar", True, YELLOW)
+
+        #WIN.blit(titulo, titulo.get_rect(center=(WIDTH // 2, 120)))
+        #WIN.blit(nome_vencedor, nome_vencedor.get_rect(center=(WIDTH // 2, 220)))
+        #WIN.blit(l1, l1.get_rect(center=(WIDTH // 2, 300)))
+        #WIN.blit(l2, l2.get_rect(center=(WIDTH // 2, 345)))
+        #WIN.blit(instrucao, instrucao.get_rect(center=(WIDTH // 2, HEIGHT - 70)))
+
+        for event in pygame.event.get():
+            check_exit(event)
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    return "continue"
+                if event.key == pygame.K_ESCAPE:
+                    return "restart"
+
+        pygame.display.update()
 # LOOP PRINCIPAL DA FASE
 def run_phase_2(player1_name: str, player2_name: str, car1_sprite=None, car2_sprite=None):
+    global WIN
     """
     Controlador principal (Game Loop) da Fase 2.
     Interpreta os inputs de teclado de ambos jogadores e renderiza o cenário em 60 FPS.
@@ -379,8 +493,8 @@ def run_phase_2(player1_name: str, player2_name: str, car1_sprite=None, car2_spr
 
     # Verifica o contexto atual da tela para não quebrar no macOS/Windows
     WIN = pygame.display.get_surface()
-    if WIN.get_size() != (WIDTH, HEIGHT):
-        WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+    if WIN is None or WIN.get_size() != (WIDTH, HEIGHT):
+        WIN = pygame.display.set_mode((WIDTH, HEIGHT), pygame.NOFRAME)
 
     lane_offset = 9 # Define a distância exata em pixels que os carros ficam separados
 
@@ -398,6 +512,7 @@ def run_phase_2(player1_name: str, player2_name: str, car1_sprite=None, car2_spr
         clock.tick(FPS)
 
         for event in pygame.event.get():
+            check_exit(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 raise SystemExit
@@ -405,19 +520,29 @@ def run_phase_2(player1_name: str, player2_name: str, car1_sprite=None, car2_spr
         # Processamento de Input Simultâneo (Teclado)
         keys = pygame.key.get_pressed()
 
+        # Player 1 = setas
         # Input Player 1
-        if keys[pygame.K_w]: car1.accelerate()
-        elif keys[pygame.K_s]: car1.brake()
-        else: car1.coast()
+        if keys[pygame.K_UP]:
+            car1.accelerate()
+        elif keys[pygame.K_DOWN]:
+            car1.brake()
+        else:
+            car1.coast()
 
+        # Player 2 = WASD
         # Input Player 2
-        if keys[pygame.K_UP]: car2.accelerate()
-        elif keys[pygame.K_DOWN]: car2.brake()
-        else: car2.coast()
+        if keys[pygame.K_w]:
+            car2.accelerate()
+        elif keys[pygame.K_s]:
+            car2.brake()
+        else:
+            car2.coast()
 
         # Condição de Fim de Corrida
-        if car1.laps >= TOTAL_VOLTAS and winner is None: winner = 1
-        if car2.laps >= TOTAL_VOLTAS and winner is None: winner = 2
+        if car1.laps >= TOTAL_VOLTAS and winner is None:
+            winner = 1
+        if car2.laps >= TOTAL_VOLTAS and winner is None:
+            winner = 2
 
         # Renderização Camada por Camada (Z-Index)
         WIN.blit(grass, (0, 0))
