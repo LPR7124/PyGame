@@ -1,9 +1,14 @@
+"""
+Módulo Principal - Fase 1 do Autorama.
+Este módulo é responsável por carregar os assets, inicializar a física dos carros, renderizar a pista e gerenciar o fluxo principal da corrida da Fase 1. Ele também fornece classes e funções utilitárias que foram reaproveitadas na fase 2 e podem ser aproveitadas por possíveis fases adicionais futuras.
+"""
 import importlib.util
 import math
 import os
 import sys
 import pygame
 
+# Configurações de diretório
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(CURRENT_DIR)
 PHASE2_DIR = os.path.join(ROOT_DIR, "fase_2")
@@ -13,13 +18,16 @@ if CURRENT_DIR not in sys.path:
 
 from utils import scale_image, blit_rotate_center
 
+# Centraliza a janela do PyGame
 os.environ["SDL_VIDEO_CENTERED"] = "1"
 pygame.init()
 pygame.font.init()
 
+# caminhos de arquivos
 FILE_PATH = os.path.dirname(__file__)
 IMG_PATH = os.path.abspath(os.path.join(FILE_PATH, "..", "img"))
 
+# Carregamento inicial de assets básicos
 GRASS = scale_image(pygame.image.load(os.path.join(IMG_PATH, "gramado.png")), 2.5)
 TRACK = scale_image(pygame.image.load(os.path.join(IMG_PATH, "pista.png")), 1)
 
@@ -29,6 +37,7 @@ TRACK_BORDER_MASK = pygame.mask.from_surface(TRACK_BORDER)
 RED_CAR = scale_image(pygame.image.load(os.path.join(IMG_PATH, "mazda.png")), 0.070)
 GREEN_CAR = scale_image(pygame.image.load(os.path.join(IMG_PATH, "lfa.png")), 0.070)
 
+# Configurações da janela e visuais
 WIDTH, HEIGHT = 1200,900
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Autorama 2 Jogadores")
@@ -52,6 +61,15 @@ AJUSTE_ANGULO = 90
 
 
 def load_image(filename: str, scale: float = 1.0, fallback: str | None = None) -> pygame.Surface:
+    """
+    Carrega e redimensiona uma imagem do diretório de assets.
+    Args:
+        filename (str): Nome do arquivo de imagem a ser carregado.
+        scale (float): Fator de escala para redimensionar a imagem.
+        fallback (str | None): Imagem reserva caso a principal não seja encontrada.
+    Returns:
+        pygame.Surface: A superfície da imagem carregada e escalonada.
+    """
     path = os.path.join(IMG_PATH, filename)
     if not os.path.exists(path):
         if fallback is None:
@@ -60,8 +78,16 @@ def load_image(filename: str, scale: float = 1.0, fallback: str | None = None) -
     image = pygame.image.load(path)
     return scale_image(image, scale)
 
-
 def load_assets(level: int, car1_sprite=None, car2_sprite=None):
+    """
+    Carrega os assets específicos para a fase solicitada.
+    Args:
+        level (int): O número da fase (1 ou 2).
+        car1_sprite (str): Nome do arquivo de sprite do jogador 1.
+        car2_sprite (str): Nome do arquivo de sprite do jogador 2.
+    Returns:
+        tuple: Tupla contendo as superfícies (grama, pista, contorno, carro1, carro2).
+    """
     if level == 2:
         grass = load_image("grass2.jpg", 2.5, fallback="gramado.png")
         track = load_image("track2.png", 1.0, fallback="pista.png")
@@ -90,12 +116,22 @@ def load_assets(level: int, car1_sprite=None, car2_sprite=None):
     green_car = load_image(green_sprite, green_scale, fallback="lfa.png")
     return grass, track, border, red_car, green_car
 
-
 def pct(w: int, h: int, x: float, y: float) -> tuple[int, int]:
+    """
+    Converte coordenadas relativas (0.0 a 1.0) para pixels absolutos.
+    """
     return int(w * x), int(h * y)
 
 
 def build_path(points: list[tuple[int, int]], density: int = 18) -> list[tuple[float, float]]:
+    """
+    Interpola pontos brutos para criar um caminho contínuo de alta resolução.
+    Args:
+        points: Lista de coordenadas (x, y) que definem os vértices do caminho.
+        density: Número de pontos intermediários criados entre cada par de vértices originais.
+    Returns:
+        Lista de coordenadas interpoladas representando o caminho suave.
+    """
     path: list[tuple[float, float]] = []
     for i in range(len(points)):
         a = points[i]
@@ -109,6 +145,9 @@ def build_path(points: list[tuple[int, int]], density: int = 18) -> list[tuple[f
 
 
 def normalize(x: float, y: float) -> tuple[float, float]:
+    """
+    Normaliza um vetor 2D para que tenha comprimento 1.
+    """
     dist = math.hypot(x, y)
     if dist == 0:
         return 0.0, 0.0
@@ -116,6 +155,15 @@ def normalize(x: float, y: float) -> tuple[float, float]:
 
 
 def offset_closed_polyline(points: list[tuple[int, int]], offset: float) -> list[tuple[int, int]]:
+    """
+    Cria uma linha paralela a uma polilinha fechada original.
+    Usado para gerar as faixas esquerda e direita a partir da linha central.
+    Args:
+        points: Lista de vértices da linha central.
+        offset: Distância em pixels para deslocar a linha (positivo para direita, negativo para esquerda).
+    Returns:
+        Lista de vértices representando a nova faixa deslocada.
+    """
     result: list[tuple[int, int]] = []
     n = len(points)
 
@@ -143,11 +191,17 @@ def offset_closed_polyline(points: list[tuple[int, int]], offset: float) -> list
             length = offset
 
         result.append((int(x + ox * length), int(y + oy * length)))
-
     return result
 
-
 def centerline_points(level: int, track: pygame.Surface) -> list[tuple[int, int]]:
+    """
+    Fornece as coordenadas relativas brutas (x,y) da linha central para a fase atual.
+    Args:
+        level: Número da fase.
+        track: Superfície da pista (usada para calcular as proporções).
+    Returns:
+        Lista de coordenadas absolutas em pixels da linha central.
+    """
     w, h = track.get_width(), track.get_height()
 
     if level == 2:
@@ -191,6 +245,9 @@ def centerline_points(level: int, track: pygame.Surface) -> list[tuple[int, int]
 
 
 def build_lane_paths(track: pygame.Surface, level: int, lane_offset: int = 24):
+    """
+    Gera as trajetórias interpoladas para a faixa da esquerda e direita.
+    """
     center = centerline_points(level, track)
     left_lane = build_path(offset_closed_polyline(center, -lane_offset), density=18)
     right_lane = build_path(offset_closed_polyline(center, lane_offset), density=18)
@@ -198,6 +255,10 @@ def build_lane_paths(track: pygame.Surface, level: int, lane_offset: int = 24):
 
 
 class SlotCar:
+    """
+    Representa um carro no jogo de autorama.
+    Gerencia a física (aceleração, frenagem), posição no caminho e penalidades.
+    """
     def __init__(self, image: pygame.Surface, path: list[tuple[float, float]]):
         self.img = image
         self.path = path
@@ -220,11 +281,17 @@ class SlotCar:
             self.sync_angle()
 
     def sync_angle(self):
+        """
+        Alinha a rotação do sprite do carro com a direção do caminho inicial.
+        """
         if len(self.path) > 1:
             nx, ny = self.path[1]
             self.angle = -math.degrees(math.atan2(ny - self.y, nx - self.x)) + AJUSTE_ANGULO
 
     def draw(self, win: pygame.Surface):
+        """
+        Renderiza o carro na tela, manipulando a piscada durante o crash.
+        """
         if self.crashed:
             if (self.crash_timer // 5) % 2 == 0:
                 return
@@ -236,6 +303,9 @@ class SlotCar:
             win.blit(aviso, (int(self.x) - 10, int(self.y) - 40))
 
     def manage_penalty(self) -> bool:
+        """
+        Processa a contagem regressiva da penalidade de descarrilamento.
+        """
         if self.crashed:
             self.crash_timer -= 1
             if self.crash_timer <= 0:
@@ -244,6 +314,10 @@ class SlotCar:
         return False
 
     def advance(self, distance: float):
+        """
+        Move o carro ao longo do caminho calculado com base na distância percorrida no frame.
+        Também gerencia a contagem de voltas.
+        """
         remaining = distance
 
         while remaining > 0 and not self.locked:
@@ -283,6 +357,9 @@ class SlotCar:
                 break
 
     def accelerate(self):
+        """
+        Aumenta a velocidade do carro. Pune se ultrapassar a vel_max.
+        """
         if self.locked or self.manage_penalty():
             return
 
@@ -304,6 +381,9 @@ class SlotCar:
         self.advance(self.vel)
 
     def brake(self):
+        """
+        Reduz a velocidade bruscamente quando o botão de freio é pressionado.
+        """
         if self.locked or self.manage_penalty():
             return
         self.vel = max(self.vel - self.acceleration * 2, 0.0)
@@ -311,20 +391,28 @@ class SlotCar:
             self.advance(self.vel)
 
     def coast(self):
+        """
+        Desaceleração gradual quando nenhum botão está pressionado.
+        """
         if self.locked or self.manage_penalty():
             return
         self.vel = max(self.vel - self.acceleration * 0.35, 0.0)
         if self.vel > 0:
             self.advance(self.vel)
 
-
+# Funções de interface do usuário (UI)
 def center_text(surface, text, font, color, y):
+    """
+    Utilitário para centralizar texto na tela em um dado eixo Y."""
     rendered = font.render(text, True, color)
     rect = rendered.get_rect(center=(surface.get_width() // 2, y))
     surface.blit(rendered, rect)
 
 
 def draw_button(surface, rect, text, active=False):
+    """
+    Desenha botões da interface.
+    """
     color = YELLOW if active else GRAY
     pygame.draw.rect(surface, color, rect, border_radius=14)
     pygame.draw.rect(surface, WHITE, rect, 2, border_radius=14)
@@ -333,6 +421,9 @@ def draw_button(surface, rect, text, active=False):
 
 
 def start_screen():
+    """
+    Tela de introdução da Fase 1.
+    """
     clock = pygame.time.Clock()
     fundo_fase1 = pygame.image.load(os.path.join(IMG_PATH, "fase1.png"))
     fundo_fase1 = pygame.transform.scale(fundo_fase1, (WIDTH, HEIGHT))
@@ -366,6 +457,9 @@ def start_screen():
 
 
 def ask_player_names():
+    """
+    Tela para entrada de dados (nomes dos jogadores).
+    """
     clock = pygame.time.Clock()
     name1 = ""
     name2 = ""
@@ -439,6 +533,9 @@ def ask_player_names():
 
 
 def show_message_screen(title, lines, footer="Pressione ENTER para continuar"):
+    """
+    Utilitário para exibir telas de aviso e transição.
+    """
     clock = pygame.time.Clock()
     while True:
         clock.tick(FPS)
@@ -460,8 +557,14 @@ def show_message_screen(title, lines, footer="Pressione ENTER para continuar"):
         center_text(WIN, footer, FONT_SMALL, YELLOW, WIN.get_height() - 70)
         pygame.display.update()
 
-
+# Loop principal da fase
 def run_phase(level: int, player1_name: str, player2_name: str, car1_sprite=None, car2_sprite=None):
+    """
+    Controla o Game Loop principal da fase atual.
+    Inicia os carros, processa a entrada do jogador, movimenta os objetos e renderiza a cena.
+    Returns:
+        tuple: (ID do vencedor (1 ou 2), voltas completadas pelo Player 1, voltas completadas pelo Player 2).
+    """
     global WIN
 
     DEBUG_PATHS = False
@@ -476,16 +579,17 @@ def run_phase(level: int, player1_name: str, player2_name: str, car1_sprite=None
     track = pygame.transform.scale(track, (WIDTH, HEIGHT))
     border = pygame.transform.scale(border, (WIDTH, HEIGHT))
 
+    # Criação das faixas virtuais com base no centro
     center_raw_points = centerline_points(level, track)
     lane_left, lane_right = build_lane_paths(track, level, lane_offset)
     center_path = build_path(center_raw_points, density=18)
-
+    # Instanciamento dos corredores
     car1 = SlotCar(red_car_img, lane_left)
     car2 = SlotCar(green_car_img, lane_right)
 
     clock = pygame.time.Clock()
     winner = None
-
+    # Loop
     while True:
         clock.tick(FPS)
 
@@ -493,7 +597,7 @@ def run_phase(level: int, player1_name: str, player2_name: str, car1_sprite=None
             if event.type == pygame.QUIT:
                 pygame.quit()
                 raise SystemExit
-
+        # Processamento de input (Player 1 -> W/S ; Player 2 -> UP/DOWN)
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_w]:
@@ -509,12 +613,12 @@ def run_phase(level: int, player1_name: str, player2_name: str, car1_sprite=None
             car2.brake()
         else:
             car2.coast()
-
+        # Checagem de vitória
         if car1.laps >= 3 and winner is None:
             winner = 1
         if car2.laps >= 3 and winner is None:
             winner = 2
-
+        # Renderização do cenário
         WIN.blit(grass, (0, 0))
         WIN.blit(track, (0, 0))
         WIN.blit(border, (0, 0))
@@ -526,10 +630,10 @@ def run_phase(level: int, player1_name: str, player2_name: str, car1_sprite=None
                 pygame.draw.lines(WIN, RED, True, lane_left, 2)
             if len(lane_right) > 1:
                 pygame.draw.lines(WIN, GREEN, True, lane_right, 2)
-
+        # Renderização dos carros
         car1.draw(WIN)
         car2.draw(WIN)
-
+        # Renderização do HUD (Placar)
         laps_1 = FONT_SMALL.render(f"{player1_name}: {car1.laps}/3", True, WHITE)
         laps_2 = FONT_SMALL.render(f"{player2_name}: {car2.laps}/3", True, WHITE)
         phase_label = FONT_SMALL.render(f"Fase {level}", True, CYAN)
@@ -539,12 +643,15 @@ def run_phase(level: int, player1_name: str, player2_name: str, car1_sprite=None
         WIN.blit(phase_label, (WIN.get_width() - 110, 18))
 
         pygame.display.update()
-
+        # Finaliza o loop retornando os dados
         if winner is not None:
             return winner, car1.laps, car2.laps
 
 
 def load_phase2_module():
+    """
+    Importa dinamicamente a Fase 2 localizada em outra pasta.
+    """
     phase2_path = os.path.join(PHASE2_DIR, "main.py")
     spec = importlib.util.spec_from_file_location("fase2_main_module", phase2_path)
     if spec is None or spec.loader is None:
@@ -557,6 +664,9 @@ def load_phase2_module():
 
 
 def show_phase_result(phase, winner_id, player1_name, player2_name, laps_1, laps_2):
+    """
+    Formata e exibe o resultado da fase recém concluída.
+    """
     winner_name = player1_name if winner_id == 1 else player2_name
     show_message_screen(
         f"Fase {phase} concluída",
@@ -569,6 +679,9 @@ def show_phase_result(phase, winner_id, player1_name, player2_name, laps_1, laps
 
 
 def show_final_screen(phase1_winner, phase2_winner, player1_name, player2_name):
+    """
+    Calcula a pontuação geral das duas fases e exibe o grande campeão.
+    """
     score1 = (1 if phase1_winner == 1 else 0) + (1 if phase2_winner == 1 else 0)
     score2 = (1 if phase1_winner == 2 else 0) + (1 if phase2_winner == 2 else 0)
 
@@ -591,9 +704,12 @@ def show_final_screen(phase1_winner, phase2_winner, player1_name, player2_name):
 
 
 def main():
+    """
+    Ponto de entrada do jogo (caso executado diretamente a partir deste módulo).
+    """
     start_screen()
     player1_name, player2_name = ask_player_names()
-
+    # Roda Fase 1
     phase1_winner, laps1_p1, laps1_p2 = run_phase(1, player1_name, player2_name)
 
     show_phase_result(1, phase1_winner, player1_name, player2_name, laps1_p1, laps1_p2)
@@ -606,7 +722,7 @@ def main():
             "Quem fizer 5 voltas primeiro vence.",
         ],
     )
-
+    # Roda fase 2 (carregada dinamicamente)
     try:
         phase2_module = load_phase2_module()
         phase2_winner, laps2_p1, laps2_p2 = phase2_module.run_phase_2(player1_name, player2_name)

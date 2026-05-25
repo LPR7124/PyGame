@@ -5,7 +5,7 @@ https://github.com/techwithtim/Pygame-Car-Racer.git
 
 ## Membros da Equipe - Turma A
 * Ana Luiza
-* Lívia Pinheiro
+* Lívia Pinheiro Rodrigues
 * Maria Vitória Gomes Rametta
 
 ## Sobre o Projeto
