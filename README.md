@@ -4,7 +4,7 @@ Usamos o código base disponivel em:
 https://github.com/techwithtim/Pygame-Car-Racer.git
 
 ## Membros da Equipe - Turma A
-* Ana Luiza
+* Ana Luiza Marsilio Alves
 * Lívia Pinheiro Rodrigues
 * Maria Vitória Gomes Rametta
 
