@@ -4,6 +4,9 @@ import pygame
 
 
 def scale_image(image: pygame.Surface, scale_factor: float) -> pygame.Surface:
+    """
+    Redimensiona uma imagem mantendo a proporção.
+    """
     width = int(image.get_width() * scale_factor)
     height = int(image.get_height() * scale_factor)
     return pygame.transform.scale(image, (width, height))
@@ -15,7 +18,13 @@ def blit_rotate_center(
     top_left: tuple[int, int],
     angle: float
 ) -> pygame.Rect:
+    """
+    Rotaciona a imagem e a desenha centralizada na coordenada passada.
+    """
+    # Rotaciona a imagem original
     rotated_image = pygame.transform.rotate(image, angle)
+    # Pega o rect da imagem rotacionada e posiciona o centro dele no ponto central do trilho
     new_rect = rotated_image.get_rect(center=image.get_rect(topleft=top_left).center)
+    # Desenha na tela usando o canto superior esquerdo calculado pelo rect
     surface.blit(rotated_image, new_rect.topleft)
     return new_rect
