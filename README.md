@@ -8,6 +8,12 @@ https://github.com/techwithtim/Pygame-Car-Racer.git
 * Lívia Pinheiro Rodrigues
 * Maria Vitória Gomes Rametta
 
+##  Tecnologias e Créditos de Co-Criação (IA)
+Este projeto foi desenvolvido com o suporte de ferramentas de Inteligência Artificial para otimização de código e geração de assets, divididos da seguinte forma:
+* **Física e Lógica do Mapeador (`mapeador.py`):** Desenvolvido em co-criação com o **Google Gemini**, que auxiliou na estruturação dos algoritmos matemáticos de interpolação de curvas e cálculo vetorial de faixas paralelas (`offset_closed_polyline`).
+* **Design Visual e Iteração de Código:** Suporte técnico do **Google Gemini** na refatoração, modularização de arquivos e implementação de feedbacks dinâmicos de áudio.
+* **Assets de Imagem (Arte e Interface):** As telas de menu retrô (Capa, Escolha de Carros, Telas de Instrução) e os elementos visuais do jogo foram gerados e refinados utilizando o **ChatGPT (OpenAI / DALL-E)**.
+
 ## Sobre o Projeto
 O AutoFox é um simulador de autorama estilo arcade para dois jogadores desenvolvido inteiramente em Python. O jogo desafia os jogadores a controlarem a velocidade de seus veículos em pistas sinuosas. Acelerar demais nas curvas fará o carro descarrilar, aplicando uma punição de tempo! O projeto conta com:
 * Interface retrô pixel art e trilha sonora dinâmica.

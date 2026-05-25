@@ -1,3 +1,9 @@
+"""
+Módulo Utilitário - Mapeador de Pistas.
+Este script foi desenvolvido com o suporte de IA (Google Gemini) para auxiliar
+no mapeamento de coordenadas geográficas das pistas. Ele permite capturar os cliques
+do mouse para gerar as matrizes numéricas brutas utilizadas no cálculo de trajetórias.
+"""
 import os
 import pygame
 
