@@ -71,6 +71,7 @@ def load_image(filename: str, scale: float = 1.0, fallback: str | None = None) -
     image = pygame.image.load(path)
     return scale_image(image, scale)
 
+
 def load_assets(level: int, car1_sprite=None, car2_sprite=None):
     if level == 2:
         grass = load_image("grass2.jpg", 2.5, fallback="gramado.png")
@@ -99,8 +100,10 @@ def load_assets(level: int, car1_sprite=None, car2_sprite=None):
     green_car = load_image(green_sprite, green_scale, fallback="lfa.png")
     return grass, track, border, red_car, green_car
 
+
 def pct(w: int, h: int, x: float, y: float) -> tuple[int, int]:
     return int(w * x), int(h * y)
+
 
 def build_path(points: list[tuple[int, int]], density: int = 18) -> list[tuple[float, float]]:
     path: list[tuple[float, float]] = []
@@ -114,11 +117,13 @@ def build_path(points: list[tuple[int, int]], density: int = 18) -> list[tuple[f
             path.append((x, y))
     return path
 
+
 def normalize(x: float, y: float) -> tuple[float, float]:
     dist = math.hypot(x, y)
     if dist == 0:
         return 0.0, 0.0
     return x / dist, y / dist
+
 
 def offset_closed_polyline(points: list[tuple[int, int]], offset: float) -> list[tuple[int, int]]:
     result: list[tuple[int, int]] = []
@@ -150,6 +155,7 @@ def offset_closed_polyline(points: list[tuple[int, int]], offset: float) -> list
         result.append((int(x + ox * length), int(y + oy * length)))
 
     return result
+
 
 def centerline_points(level: int, track: pygame.Surface) -> list[tuple[int, int]]:
     w, h = track.get_width(), track.get_height()
@@ -193,11 +199,13 @@ def centerline_points(level: int, track: pygame.Surface) -> list[tuple[int, int]
 
     return [pct(w, h, x, y) for x, y in raw]
 
+
 def build_lane_paths(track: pygame.Surface, level: int, lane_offset: int = 24):
     center = centerline_points(level, track)
     left_lane = build_path(offset_closed_polyline(center, -lane_offset), density=18)
     right_lane = build_path(offset_closed_polyline(center, lane_offset), density=18)
     return left_lane, right_lane
+
 
 class SlotCar:
     def __init__(self, image: pygame.Surface, path: list[tuple[float, float]]):
@@ -291,9 +299,7 @@ class SlotCar:
         self.vel += self.acceleration
 
         if self.vel > self.derail_vel:
-            # SOM DO CARRO MORRENDO
             try:
-                # Volta uma pasta para sair de 'fase_1' e entra em 'music'
                 caminho_sfx = os.path.join(os.path.dirname(__file__), "..", "music", "carro_morrendo.mp3")
                 pygame.mixer.Sound(caminho_sfx).play()
             except Exception as e:
@@ -319,10 +325,12 @@ class SlotCar:
         if self.vel > 0:
             self.advance(self.vel)
 
+
 def center_text(surface, text, font, color, y):
     rendered = font.render(text, True, color)
     rect = rendered.get_rect(center=(surface.get_width() // 2, y))
     surface.blit(rendered, rect)
+
 
 def draw_button(surface, rect, text, active=False):
     color = YELLOW if active else GRAY
@@ -330,6 +338,7 @@ def draw_button(surface, rect, text, active=False):
     pygame.draw.rect(surface, WHITE, rect, 2, border_radius=14)
     label = FONT_SMALL.render(text, True, BLACK)
     surface.blit(label, label.get_rect(center=rect.center))
+
 
 def start_screen():
     clock = pygame.time.Clock()
@@ -363,6 +372,7 @@ def start_screen():
                         return
 
         pygame.display.update()
+
 
 def ask_player_names():
     clock = pygame.time.Clock()
@@ -399,12 +409,14 @@ def ask_player_names():
                 if event.key == pygame.K_TAB:
                     try:
                         pygame.mixer.Sound(os.path.join(IMG_PATH, "..", "music", "escolher_carro.mp3")).play()
-                    except: pass
+                    except:
+                        pass
                     active = 2 if active == 1 else 1
                 elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                     try:
                         pygame.mixer.Sound(os.path.join(IMG_PATH, "..", "music", "escolher_carro.mp3")).play()
-                    except: pass
+                    except:
+                        pass
                     return name1.strip() or "Player 1", name2.strip() or "Player 2"
                 elif event.key == pygame.K_BACKSPACE:
                     if active == 1:
@@ -437,7 +449,8 @@ def ask_player_names():
 
         pygame.display.update()
 
-def show_message_screen(title, lines, footer="Pressione ENTER para continuar", allow_restart= True):
+
+def show_message_screen(title, lines, footer="Pressione ENTER para continuar", allow_restart=True):
     clock = pygame.time.Clock()
     while True:
         clock.tick(FPS)
@@ -462,6 +475,7 @@ def show_message_screen(title, lines, footer="Pressione ENTER para continuar", a
 
         center_text(WIN, footer, FONT_SMALL, YELLOW, WIN.get_height() - 70)
         pygame.display.update()
+
 
 def run_phase(level: int, player1_name: str, player2_name: str, car1_sprite=None, car2_sprite=None):
     global WIN
@@ -500,16 +514,18 @@ def run_phase(level: int, player1_name: str, player2_name: str, car1_sprite=None
 
         keys = pygame.key.get_pressed()
 
-        if keys[pygame.K_w]:
+        # Player 1 = setas
+        if keys[pygame.K_UP]:
             car1.accelerate()
-        elif keys[pygame.K_s]:
+        elif keys[pygame.K_DOWN]:
             car1.brake()
         else:
             car1.coast()
 
-        if keys[pygame.K_UP]:
+        # Player 2 = WASD
+        if keys[pygame.K_w]:
             car2.accelerate()
-        elif keys[pygame.K_DOWN]:
+        elif keys[pygame.K_s]:
             car2.brake()
         else:
             car2.coast()
@@ -547,6 +563,7 @@ def run_phase(level: int, player1_name: str, player2_name: str, car1_sprite=None
         if winner is not None:
             return winner, car1.laps, car2.laps
 
+
 def load_phase2_module():
     phase2_path = os.path.join(PHASE2_DIR, "main.py")
     spec = importlib.util.spec_from_file_location("fase2_main_module", phase2_path)
@@ -558,15 +575,8 @@ def load_phase2_module():
     spec.loader.exec_module(module)
     return module
 
+
 def show_phase_result(phase, winner_id, player1_name, player2_name, laps_1, laps_2):
-    #winner_name = player1_name if winner_id == 1 else player2_name
-    #show_message_screen(
-    #    f"Fase {phase} concluída",
-        ##f"Vencedor: {winner_name}",
-            #[f"{player1_name}: {laps_1} voltas",
-            #f"{player2_name}: {laps_2} voltas",
-        #],
-    #)
     global WIN
     clock = pygame.time.Clock()
     fundo_final = pygame.image.load(os.path.join(IMG_PATH, "final-fase1.png"))
@@ -582,26 +592,6 @@ def show_phase_result(phase, winner_id, player1_name, player2_name, laps_1, laps
                     return
         pygame.display.update()
 
-#def show_final_screen(phase1_winner, phase2_winner, player1_name, player2_name):
-    score1 = (1 if phase1_winner == 1 else 0) + (1 if phase2_winner == 1 else 0)
-    score2 = (1 if phase1_winner == 2 else 0) + (1 if phase2_winner == 2 else 0)
-
-    if score1 > score2:
-        champ = f"Campeão geral: {player1_name}"
-    elif score2 > score1:
-        champ = f"Campeão geral: {player2_name}"
-    else:
-        champ = "Empate geral!"
-
-    show_message_screen(
-        "Resultado final",
-        [
-            champ,
-            f"Fase 1: {'carro vermelho' if phase1_winner == 1 else 'carro verde'}",
-            f"Fase 2: {'carro vermelho' if phase2_winner == 1 else 'carro verde'}",
-        ],
-        footer="Pressione ENTER para sair | ESC para voltar ao início", allow_restart=True,
-    )
 
 def main():
     start_screen()
@@ -611,15 +601,6 @@ def main():
 
     show_phase_result(1, phase1_winner, player1_name, player2_name, laps1_p1, laps1_p2)
 
-    #show_message_screen(
-        #"FASE 2",
-        #[
-            #"Agora a segunda pista vai começar.",
-            #"Os carrinhos continuam na própria faixa.",
-            #"Quem fizer 5 voltas primeiro vence.",
-        #],
-    #)
-
     try:
         phase2_module = load_phase2_module()
         phase2_winner, laps2_p1, laps2_p2 = phase2_module.run_phase_2(player1_name, player2_name)
@@ -628,7 +609,6 @@ def main():
         print(f"Não foi possível carregar a fase 2. Erro: {e}")
         phase2_winner, laps2_p1, laps2_p2 = 0, 0, 0
 
-    #show_final_screen(phase1_winner, phase2_winner, player1_name, player2_name)
     pygame.quit()
 
 

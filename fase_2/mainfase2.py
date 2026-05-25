@@ -398,16 +398,26 @@ def run_phase_2(player1_name: str, player2_name: str, car1_sprite=None, car2_spr
 
         keys = pygame.key.get_pressed()
 
-        if keys[pygame.K_w]: car1.accelerate()
-        elif keys[pygame.K_s]: car1.brake()
-        else: car1.coast()
+        # Player 1 = setas
+        if keys[pygame.K_UP]:
+            car1.accelerate()
+        elif keys[pygame.K_DOWN]:
+            car1.brake()
+        else:
+            car1.coast()
 
-        if keys[pygame.K_UP]: car2.accelerate()
-        elif keys[pygame.K_DOWN]: car2.brake()
-        else: car2.coast()
+        # Player 2 = WASD
+        if keys[pygame.K_w]:
+            car2.accelerate()
+        elif keys[pygame.K_s]:
+            car2.brake()
+        else:
+            car2.coast()
 
-        if car1.laps >= TOTAL_VOLTAS and winner is None: winner = 1
-        if car2.laps >= TOTAL_VOLTAS and winner is None: winner = 2
+        if car1.laps >= TOTAL_VOLTAS and winner is None:
+            winner = 1
+        if car2.laps >= TOTAL_VOLTAS and winner is None:
+            winner = 2
 
         WIN.blit(grass, (0, 0))
         WIN.blit(track, (0, 0))
@@ -435,7 +445,7 @@ def run_phase_2(player1_name: str, player2_name: str, car1_sprite=None, car2_spr
 
         if winner is not None:
             return winner, car1.laps, car2.laps
-
+        
 if __name__ == "__main__":
     pygame.display.set_mode((WIDTH, HEIGHT))
     run_phase_2("Corredor 1", "Corredor 2")
