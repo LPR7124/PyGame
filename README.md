@@ -8,6 +8,9 @@ https://github.com/techwithtim/Pygame-Car-Racer.git
 * Lívia Pinheiro Rodrigues
 * Maria Vitória Gomes Rametta
 
+## Vídeo demonstrando o funcionamento do jogo
+LINK PARA VÍDEO NO YOUTUBE: https://youtu.be/u6QqQqq8Eww
+
 ## Tecnologias e Créditos de Co-Criação (IA)
 Este projeto foi desenvolvido com o suporte de ferramentas de Inteligência Artificial para otimização de código e geração de assets, divididos da seguinte forma:
 * **Física e Lógica do Mapeador (`mapeador.py`):** Desenvolvido em co-criação com o **Google Gemini**, que auxiliou na estruturação dos algoritmos matemáticos de interpolação de curvas e cálculo vetorial de faixas paralelas (`offset_closed_polyline`).
