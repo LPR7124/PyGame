@@ -14,7 +14,7 @@ Este projeto foi desenvolvido com o suporte de ferramentas de Inteligência Arti
 * **Design Visual e Iteração de Código:** Suporte técnico do **Google Gemini** na refatoração, modularização de arquivos e implementação de feedbacks dinâmicos de áudio.
 * **Assets de Imagem (Arte e Interface):** As telas de menu retrô (Capa, Escolha de Carros, Telas de Instrução) e os elementos visuais do jogo foram gerados e refinados utilizando o **ChatGPT (OpenAI / DALL-E)**.
 
-## 🎵 Trilhas Sonoras e Efeitos Sonoros (SFX)
+## Trilhas Sonoras e Efeitos Sonoros (SFX)
 Para construir a atmosfera de corrida arcade inspirada na cultura automotiva, este projeto acadêmico utiliza músicas comerciais sob a doutrina de **Uso Educacional / Fair Use** (sem fins lucrativos). Todos os direitos pertencem aos seus respectivos autores e gravadoras:
 * **Música Tema da Corrida (`principal_sixdays.mp3`):** *Six Days* (DJ Shadow / Mos Def).
 * **Música Ambiente dos Menus (`principal.mp3`):** *Tokyo Drift* (Teriyaki Boyz).
