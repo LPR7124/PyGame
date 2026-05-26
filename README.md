@@ -30,6 +30,7 @@ O AutoFox é um simulador de autorama estilo arcade para dois jogadores desenvol
 
 ## Apresentação em Vídeo
 [Clique aqui para assistir ao vídeo de demonstração do jogo no YouTube](https://youtu.be/u6QqQqq8Eww)
+*Obs.: As músicas e sons do jogo não apareceram no vídeo da captura de tela, mas é possível ouvi-los ao clonar o repositório e rodar o jogo.*
 
 ## Pré-requisitos e Instalação
 Antes de rodar o jogo, certifique-se de ter o [Python](https://www.python.org/) e a biblioteca PyGame (pip install pygame) instalados em sua máquina.
